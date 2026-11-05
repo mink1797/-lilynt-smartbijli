@@ -1,0 +1,13 @@
+import 'dotenv/config';
+import express from 'express';
+import helmet from 'helmet';
+import cors from 'cors';
+import pg from 'pg';
+const app=express();
+const pool=new pg.Pool({connectionString:process.env.DATABASE_URL,ssl:process.env.NODE_ENV==='production'?{rejectUnauthorized:false}:false});
+app.use(helmet());
+app.use(cors({origin:process.env.FRONTEND_ORIGIN||'http://localhost:5173'}));
+app.use(express.json({limit:'1mb'}));
+app.get('/api/health',async(_req,res)=>{try{await pool.query('SELECT 1');res.json({status:'ok',database:'connected'});}catch{res.status(503).json({status:'degraded',database:'unavailable'});}});
+const port=Number(process.env.PORT)||4000;
+app.listen(port,()=>console.log('SmartBijli API listening on '+port));
